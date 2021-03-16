@@ -84,3 +84,7 @@
  * cases between the time slice signal and other rr behavior.
  */
 #define SYS_rrcall_arm_time_slice (RR_CALL_BASE + 10)
+/**
+ * Requests the current rr tick.
+ */
+#define SYS_rrcall_current_time (RR_CALL_BASE + 11)
