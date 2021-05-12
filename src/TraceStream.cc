@@ -408,6 +408,7 @@ void TraceWriter::write_frame(RecordTask* t, const Event& ev,
   frame.setTid(t->tid);
   frame.setTicks(t->tick_count());
   frame.setMonotonicSec(monotonic_now_sec());
+  frame.setUserTime(t->current_user_time());
   auto mem_writes = frame.initMemWrites(raw_recs.size());
   for (size_t i = 0; i < raw_recs.size(); ++i) {
     auto w = mem_writes[i];
@@ -560,6 +561,7 @@ TraceFrame TraceReader::read_frame() {
     FATAL() << "Invalid ticks value";
   }
   monotonic_time_ = ret.monotonic_time_ = frame.getMonotonicSec();
+  ret.user_time_ = frame.getUserTime();
 
   SupportedArch arch = from_trace_arch(frame.getArch());
   ret.recorded_regs.set_arch(arch);
