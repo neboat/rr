@@ -51,6 +51,8 @@ public:
   void validate_regs(uint32_t flags = 0);
   const TraceFrame& current_trace_frame();
   FrameTime current_frame_time();
+  bool watch_user_time();
+  void unwatch_user_time();
   /** Restore the next chunk of saved data from the trace to this. */
   ssize_t set_data_from_trace();
   /** Restore all remaining chunks of saved data for the current trace frame. */
