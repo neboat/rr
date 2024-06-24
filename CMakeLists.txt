@@ -882,12 +882,14 @@ set(BASIC_TESTS
   io
   io_uring
   ioctl
+  ioctl_blk
   ioctl_fb
   ioctl_fs
   ioctl_pty
   ioctl_sg
   ioctl_tty
   ioctl_vt
+  ioprio
   x86/ioperm
   x86/iopl
   join_threads

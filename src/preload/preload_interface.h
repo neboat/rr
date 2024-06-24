@@ -259,6 +259,8 @@ struct preload_globals {
      fd table. Set by rr during record (modifications are recorded).
      Read by the syscallbuf */
   unsigned char fdt_uniform;
+
+  long rrcall_user_time_counter;
 };
 
 /**

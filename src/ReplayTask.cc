@@ -112,6 +112,20 @@ FrameTime ReplayTask::current_frame_time() {
   return current_trace_frame().time();
 }
 
+bool ReplayTask::watch_user_time() {
+  remote_ptr<long> user_time_counter_ptr =
+    REMOTE_PTR_FIELD(preload_globals, rrcall_user_time_counter);
+  return vm()->add_watchpoint(user_time_counter_ptr,
+                              sizeof(long), WATCH_WRITE);
+}
+
+void ReplayTask::unwatch_user_time() {
+  remote_ptr<long> user_time_counter_ptr =
+    REMOTE_PTR_FIELD(preload_globals, rrcall_user_time_counter);
+  vm()->remove_watchpoint(user_time_counter_ptr, sizeof(long),
+                          WATCH_WRITE);
+}
+
 ssize_t ReplayTask::set_data_from_trace() {
   auto buf = trace_reader().read_raw_data();
   if (!buf.addr.is_null() && buf.data.size() > 0) {

@@ -7,6 +7,7 @@
 #include <limits.h>
 #include <linux/auxvec.h>
 #include <linux/capability.h>
+#include <linux/cdrom.h>
 #include <linux/elf.h>
 #include <linux/ethtool.h>
 #include <linux/fb.h>
@@ -1735,6 +1736,7 @@ static Switchable prepare_ioctl(RecordTask* t,
       syscall_state.reg_parameter<typename Arch::termio>(3);
       return PREVENT_SWITCH;
 
+    case BLKSSZGET:
     case KDGKBMODE:
     case TIOCINQ:
     case TIOCOUTQ:
@@ -1798,6 +1800,14 @@ static Switchable prepare_ioctl(RecordTask* t,
 
     case FBIOGET_VSCREENINFO:
       syscall_state.reg_parameter<typename Arch::fb_var_screeninfo>(3);
+      return PREVENT_SWITCH;
+
+    case CDROMREADTOCHDR:
+      syscall_state.reg_parameter<typename Arch::cdrom_tochdr>(3);
+      return PREVENT_SWITCH;
+
+    case CDROMREADTOCENTRY:
+      syscall_state.reg_parameter<typename Arch::cdrom_tocentry>(3);
       return PREVENT_SWITCH;
   }
 
@@ -1976,6 +1986,7 @@ static Switchable prepare_ioctl(RecordTask* t,
     case IOCTL_MASK_SIZE(JSIOCGNAME(0)):
     case IOCTL_MASK_SIZE(HIDIOCGRAWINFO):
     case IOCTL_MASK_SIZE(HIDIOCGRAWNAME(0)):
+    case IOCTL_MASK_SIZE(BLKGETSIZE64):
       syscall_state.reg_parameter(3, size);
       return PREVENT_SWITCH;
 
@@ -4828,6 +4839,19 @@ static Switchable rec_prepare_syscall_arch(RecordTask* t,
       t->rec_tid = new_tid;
 
       return ALLOW_SWITCH;
+    }
+    case SYS_rrcall_current_time: {
+      // Since this is "user" facing, we follow best practices for regular
+      // syscalls and make sure that unused arguments (in this case all of them)
+      // are zero.
+      bool arguments_are_zero = true;
+      Registers r = t->regs();
+      for (int i = 1; i <= 6; ++i) {
+        arguments_are_zero &= r.arg(i) == 0;
+      }
+      syscall_state.emulate_result(arguments_are_zero ? t->trace_time() : (uintptr_t)-EINVAL);
+      syscall_state.expect_errno = ENOSYS;
+      return PREVENT_SWITCH;
     }
 
     case SYS_rrcall_arm_time_slice: {

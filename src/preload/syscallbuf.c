@@ -818,6 +818,7 @@ static void __attribute__((constructor)) init_process(void) {
 
   globals.breakpoint_value = (uint64_t)-1;
   globals.fdt_uniform = 1;
+  globals.rrcall_user_time_counter = 0;
   params.breakpoint_instr_addr = &do_breakpoint_fault_addr;
   params.breakpoint_mode_sentinel = -1;
 
@@ -3176,6 +3177,23 @@ static long sys_getrusage(const struct syscall_info* call) {
   return commit_raw_syscall(syscallno, ptr, ret);
 }
 
+static long sys_rrcall_current_time(const struct syscall_info* call) {
+  const int syscallno = SYS_rrcall_current_time;
+  void* ptr = prep_syscall();
+  long ret;
+
+  assert(syscallno == call->no);
+
+  if (!start_commit_buffered_syscall(syscallno, ptr, WONT_BLOCK)) {
+    return traced_raw_syscall(call);
+  }
+
+  ret = ++globals.rrcall_user_time_counter;
+  long result = commit_raw_syscall(syscallno, ptr, ret);
+
+  return result;
+}
+
 // The alignment of this struct is incorrect, but as long as it's not
 // used inside other structures, defining it this way makes the code below
 // easier.
@@ -3359,6 +3377,7 @@ case SYS_epoll_pwait:
 #if defined(SYS_rmdir)
     CASE_GENERIC_NONBLOCKING(rmdir);
 #endif
+    CASE(rrcall_current_time);
     CASE(rt_sigprocmask);
 #if defined(SYS_sendmsg)
     CASE(sendmsg);
